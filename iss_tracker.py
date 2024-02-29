@@ -1,8 +1,10 @@
 import requests
 import xmltodict
-from flask import Flask
+from flask import Flask, request
 from datetime import datetime
 from math import sqrt
+
+app = Flask(__name__)
 
 @app.route('/epochs', methods=['GET'])
 def find_iss_list():
@@ -18,7 +20,7 @@ def find_iss_list():
     response_list = response_dict
 
     limit = request.args.get('limit', f"{len(response_list)}")
-    offset = request.args.get('offset', '0')
+    offset = request.args.get('offset', '1')
     try:
         limit = int(limit)
     except ValueError:
@@ -27,7 +29,7 @@ def find_iss_list():
         offset = int(offset)
     except ValueError:
         return "Error: offset muct be a positive integer"
-    return response_list[offset:limit + offset]
+    return response_list[offset - 1 :limit + offset - 1]
 
 def epoch_to_list(epoch_string):
     '''
@@ -112,6 +114,7 @@ def find_closest_epoch(list_of_dicts, current_date_time):
         # print(epoch_to_list(iss_dict['EPOCH']))
         epoch_list = epoch_to_list(iss_dict['EPOCH'])
         epoch_time_in_min = epoch_list[1]*(24*60) + epoch_list[2]*60 + epoch_list[3]
+        #final part of function
         if abs(epoch_time_in_min - current_time_in_min) < 2:
             closest_epoch = iss_dict
         elif abs(epoch_time_in_min - current_time_in_min) == 2:
@@ -127,18 +130,34 @@ def find_closest_epoch(list_of_dicts, current_date_time):
 
 @app.route('/epochs/<epoch>', methods=['GET'])
 def find_matching_epoch(epoch):
+    '''
+    Inputs:
+    epoch (str): This is the string of the time stamp in the form <YEAR>-<DAY>T<HOUR>:<MINUTE>:<SECOND>.<MILISECOND>Z
+
+    Outputs:
+    iss_state_vector (dict): This is the dictionary of state vectors from the ISS data that matches the timestamp
+    '''
     iss_list = find_iss_list()
     for iss_state_vector in iss_list:
         iss_epoch = iss_state_vector['EPOCH']
         if iss_epoch == epoch:
-            return iss_epoch
+            return iss_state_vector
     return "Error: epoch is not in data set"
 
-@app.route('epochs/<epoch>/speed', methods=['GET'])
+@app.route('/epochs/<epoch>/speed', methods=['GET'])
 def find_matching_speed(epoch):
+    '''
+    Inputs:
+    epoch (str): This is the string of the time stamp in the form <YEAR>-<DAY>T<HOUR>:<MINUTE>:<SECOND>.<MILISECOND>Z
+
+    Outputs:
+    return_dictionary (dict): This dictionary has the key epoch with the valuebeing the timestamp, and the key speed which has the value of the speed of the ISS at the time stamp
+
+    '''
     match_epoch = find_matching_epoch(epoch)
     speed = calculate_current_speed(match_epoch)
-    return speed
+    return_dictionary = {'epoch': epoch, 'speed' : speed}
+    return return_dictionary
 
 def calculate_current_speed(epoch_dict):
     '''
@@ -156,16 +175,22 @@ def calculate_current_speed(epoch_dict):
 
 @app.route('/now', methods=['GET'])
 def find_now():
+    '''
+    Outputs:
+    return_dictionary (dict): This dictionary has the key epoch with the valuebeing the timestamp of the time this function is called, and the key speed which has the value of the speed of the ISS at the current time
+    '''
     current_date_time = datetime.now()
     current_date_time_list = [current_date_time.year, current_date_time.month, current_date_time.day, current_date_time.hour, current_date_time.minute, current_date_time.second]
-    
-    iss_list = find_iss_list()
 
+    iss_list = find_iss_list()
+    
     current_epoch = find_closest_epoch(iss_list, current_date_time_list)
+
     instant_speed = calculate_current_speed(current_epoch)
     
-    return current_epoch, instant_speed
+    return_dictionary = {'epoch' : current_epoch['EPOCH'], 'speed' : instant_speed}
 
-app = Flask(__name__)
+    return return_dictionary
+
 if __name__ == "__main__":
    app.run(debug=True, host = '0.0.0.0')
