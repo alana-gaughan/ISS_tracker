@@ -1,10 +1,55 @@
 import requests
 import xmltodict
+import time
+import math
 from flask import Flask, request
 from datetime import datetime
 from math import sqrt
+from geopy.geocoders import Nominatim
+from astropy import coordinates
+from astropy import units
+from astropy.time import Time
 
 app = Flask(__name__)
+
+def get_data():
+    '''
+    Outputs:
+    response_dict (dict): This dictionary contains two dictionaries with the ISS data header and the ISS data body
+    '''
+    response = requests.get(url='https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml')
+    response_dict = xmltodict.parse(response.content)
+    return response_dict['ndm']['oem']
+
+@app.route('/header', methods=['GET'])
+def find_header():
+    '''
+    Outputs:
+    header (dict): dict that contains the header information in ISS data
+    '''
+    response_dict = get_data()
+    header = response_dict['header']
+    return header
+
+@app.route('/metadata', methods=['GET'])
+def find_metadata():
+    '''
+    Outputs:
+    metadata (dict): dict that contains the metadata information in ISS data
+    '''
+    response_dict = get_data()
+    metadata = response_dict['body']['segment']['metadata']
+    return metadata
+
+@app.route('/comment', methods=['GET'])
+def find_comments():
+    '''
+    Outputs:
+    comments (list): list that contains the header information in ISS data
+    '''
+    response_dict = get_data()
+    comment = response_dict['body']['segment']['data']['COMMENT']
+    return comment
 
 @app.route('/epochs', methods=['GET'])
 def find_iss_list():
@@ -12,15 +57,14 @@ def find_iss_list():
     Outputs:
     response_list (list): This is a list of dicts that contains the data from the ISS tracker. The length of the list is the limit, and the list begins at the offset index
     '''
-    list_of_keys = ['ndm', 'oem', 'body', 'segment', 'data', 'stateVector']
-    response = requests.get(url='https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml')
-    response_dict = xmltodict.parse(response.content)
+    list_of_keys = ['body', 'segment', 'data', 'stateVector']
+    response_dict = get_data()
     for key_string in list_of_keys:
         response_dict = response_dict[key_string]
     response_list = response_dict
 
     limit = request.args.get('limit', f"{len(response_list)}")
-    offset = request.args.get('offset', '1')
+    offset = request.args.get('offset', '0')
     try:
         limit = int(limit)
     except ValueError:
@@ -29,7 +73,7 @@ def find_iss_list():
         offset = int(offset)
     except ValueError:
         return "Error: offset muct be a positive integer"
-    return response_list[offset - 1 :limit + offset - 1]
+    return response_list[offset :limit + offset]
 
 def epoch_to_list(epoch_string):
     '''
@@ -142,7 +186,7 @@ def find_matching_epoch(epoch):
         iss_epoch = iss_state_vector['EPOCH']
         if iss_epoch == epoch:
             return iss_state_vector
-    return "Error: epoch is not in data set"
+    return "Error: epoch is not in data set\n"
 
 @app.route('/epochs/<epoch>/speed', methods=['GET'])
 def find_matching_speed(epoch):
@@ -173,6 +217,92 @@ def calculate_current_speed(epoch_dict):
     current_speed = sqrt( x_dot**2 + y_dot**2 + z_dot**2)
     return current_speed
 
+def calculate_location_astropy(state_vector):
+    '''
+    Inputs:
+    state_vector (dict): This dict contains the timestamp, and the velocity and position of the ISS in J2000 reference frame in that time frame
+
+    Outputs:
+    loc.lat.value (float): the latitude of the ISS
+    loc.lon.value (float): the longitude of the ISS
+    loc.height.vale (float): the altitude of the ISS
+    '''
+    # This code is from COE332 slack written by Professor Allen
+    x = float(state_vector['X']['#text'])
+    y = float(state_vector['Y']['#text'])
+    z = float(state_vector['Z']['#text'])
+    # assumes epoch is in format '2024-067T08:28:00.000Z'
+    this_epoch = time.strftime('%Y-%m-%d %H:%m:%S', time.strptime(state_vector['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
+    cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
+    gcrs = coordinates.GCRS(cartrep, obstime=this_epoch)
+    itrs = gcrs.transform_to(coordinates.ITRS(obstime=this_epoch))
+    loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
+    return loc.lat.value, loc.lon.value, loc.height.value
+
+def calculate_location_math(state_vector):
+    MEAN_EARTH_RADIUS = 6378.137
+    # This code is from COE332 slack written by Professor Allen
+    x = float(state_vector['X']['#text'])
+    y = float(state_vector['Y']['#text'])
+    z = float(state_vector['Z']['#text'])
+    epoch = state_vector['EPOCH']
+    epoch_time = epoch.split("T")[1].split(":")
+    hrs = int(epoch_time[0])
+    mins = int(epoch_time[1])
+    print(f"hrs = {hrs}, mins = {mins}")
+    
+    lat = math.degrees(math.atan2(z, math.sqrt(x**2 + y**2)))
+    alt = math.sqrt(x**2 + y**2 + z**2) - MEAN_EARTH_RADIUS
+    lon = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
+
+    if lon > 180:
+        lon = -180 + (lon - 180)
+    if lon < -180:
+        lon = 180 + (lon + 180)
+    return lat, lon, alt
+
+def calculate_location_geopy(lat, lon):
+    '''
+    Inputs:
+    lat (float): The latitude the ISS is located at
+    lon (float): The longitude the ISS is located at
+
+    Outputs:
+    geo (str): The geopositon of the ISS with given latitude and longitude 
+    '''
+    # This code is from the Prof as well
+    geocoder = Nominatim(user_agent='iss_tracker')
+    geo = geocoder.reverse((lat, lon), zoom=15, language="en")
+    if geo:
+        return geo
+    else:
+        return "No data, perhaps over an ocean"
+
+@app.route('/epochs/<epoch>/location', methods=['GET'])
+def find_location(epoch):
+    '''
+    Inputs:
+    epoch (str): This string contains the current time in the form of...
+
+    Outpots:
+    location_dictionary (dict): This dictionary conatins latitude, longitude, altitude, and geoposition of the ISS at the given epoch
+    '''
+    # Find the state vector
+    state_vector = find_matching_epoch(epoch)
+
+    # Find latitude, longitude, altitude
+    lat, lon, alt = calculate_location_astropy(state_vector)
+    # find geoposition
+    geo = calculate_location_geopy(lat, lon)
+    # compile return dictionary
+    return_dict_astropy = {'latitude': lat,'longitude': lon, 'altitude': alt, 'geoposition': geo}
+
+    lat2, lon2, alt2 = calculate_location_math(state_vector)
+    geo2 = calculate_location_geopy(lat, lon)
+    return_dict_math =  {'latitude': lat2,'longitude': lon2, 'altitude': alt2, 'geoposition': geo2}
+
+    return {"astropy calcs": return_dict_astropy, "slack math calcs": return_dict_math}
+
 @app.route('/now', methods=['GET'])
 def find_now():
     '''
@@ -187,8 +317,10 @@ def find_now():
     current_epoch = find_closest_epoch(iss_list, current_date_time_list)
 
     instant_speed = calculate_current_speed(current_epoch)
-    
-    return_dictionary = {'epoch' : current_epoch['EPOCH'], 'speed' : instant_speed}
+
+    current_location = find_location(current_epoch['EPOCH'])
+
+    return_dictionary = {'epoch' : current_epoch['EPOCH'], 'speed' : instant_speed, 'location': current_location}
 
     return return_dictionary
 
