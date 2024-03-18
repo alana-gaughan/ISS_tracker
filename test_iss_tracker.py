@@ -52,15 +52,30 @@ def test_find_matching_speed():
     assert response7.status_code == 200
     assert isinstance(response7.json(), dict) == True
 
-example_sv = {}
+example_sv1 = {'X': {'#text': 4}, 'Y': {'#text': 4}, 'Z': {'#text': 7}}
+example_sv2 = {'X': {'#text': 1.0008}, 'Y': {'#text': 3.97}, 'Z': {'#text': 8.002}}
 def test_calculate_current_speed():
-    return
+    # using pythagorean quadruples to test this function
+    assert calculate_current_speed(example_sv1) == pytest.approx(9.0)
+    assert calculate_current_speed(example_sv2) == pytest.approx(9.0)
 
 def test_calculate_location_astropy():
-    return
-
-def test_calculate_location_geopy():
-    return
+    MEAN_EARTH_RADIUS = 6378.137
+    # This code is from COE332 slack written by Professor Allen, if this is close enough then the functions should work
+    x = float(sv_17['X']['#text'])
+    y = float(sv_17['Y']['#text'])
+    z = float(sv_17['Z']['#text'])
+    epoch = sv_17['EPOCH']
+    epoch_time = epoch.split("T")[1].split(":")
+    hrs = int(epoch_time[0])
+    mins = int(epoch_time[1])
+    lat = math.degrees(math.atan2(z, math.sqrt(x**2 + y**2)))
+    alt = math.sqrt(x**2 + y**2 + z**2) - MEAN_EARTH_RADIUS
+    lon = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
+    if lon > 180:
+        lon = -180 + (lon - 180)                                                                if lon < -180:
+        lon = 180 + (lon + 180)
+    assert calculate_location_astropy(sv_17) == (pytest.approx(lat, 20), pytest.approx(lon, 20), pytest.approx(alt, 20))
 
 response8 = requests.get(('http://127.0.0.1:5000/epochs/' + representative_epoch + '/location'))
 def test_find_location():
