@@ -3,7 +3,7 @@ import pytest
 import requests
 
 def test_get_data():
-    return
+    assert isinstance(get_data(), dict) == True
 
 response1 = requests.get('http://127.0.0.1:5000/header')
 def test_find_header():
@@ -77,6 +77,10 @@ def test_calculate_location_astropy():
     if lon < -180:
         lon = 180 + (lon + 180)
     assert calculate_location_astropy(sv_17) == (pytest.approx(lat, 20), pytest.approx(lon, 20), pytest.approx(alt, 20))
+
+def test_calculate_location_geopy():
+    assert calculate_location_geopy(30.29113, -97.73717) == 'Austin, Travis County, Texas, 78705, United States'
+    assert isinstance(calculate_location_geopy(30.29113, -97.73717), str) == True
 
 response8 = requests.get(('http://127.0.0.1:5000/epochs/' + representative_epoch + '/location'))
 def test_find_location():

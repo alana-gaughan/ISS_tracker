@@ -239,27 +239,6 @@ def calculate_location_astropy(state_vector):
     loc = coordinates.EarthLocation(*itrs.cartesian.xyz)
     return loc.lat.value, loc.lon.value, loc.height.value
 
-def calculate_location_math(state_vector):
-    MEAN_EARTH_RADIUS = 6378.137
-    # This code is from COE332 slack written by Professor Allen
-    x = float(state_vector['X']['#text'])
-    y = float(state_vector['Y']['#text'])
-    z = float(state_vector['Z']['#text'])
-    epoch = state_vector['EPOCH']
-    epoch_time = epoch.split("T")[1].split(":")
-    hrs = int(epoch_time[0])
-    mins = int(epoch_time[1])
-        
-    lat = math.degrees(math.atan2(z, math.sqrt(x**2 + y**2)))
-    alt = math.sqrt(x**2 + y**2 + z**2) - MEAN_EARTH_RADIUS
-    lon = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
-
-    if lon > 180:
-        lon = -180 + (lon - 180)
-    if lon < -180:
-        lon = 180 + (lon + 180)
-    return lat, lon, alt
-
 def calculate_location_geopy(lat, lon):
     '''
     Inputs:
@@ -271,7 +250,7 @@ def calculate_location_geopy(lat, lon):
     '''
     # This code is from the Prof as well
     geocoder = Nominatim(user_agent='iss_tracker')
-    geo = geocoder.reverse((lat, lon), zoom=15, language="en")
+    geo = geocoder.reverse((lat, lon), zoom=13, language="en")
     if geo:
         return str(geo)
     else:
@@ -294,13 +273,8 @@ def find_location(epoch):
     # find geoposition
     geo = calculate_location_geopy(lat, lon)
     # compile return dictionary
-    return_dict_astropy = {'latitude': lat,'longitude': lon, 'altitude': alt, 'geoposition': geo}
-
-    lat2, lon2, alt2 = calculate_location_math(state_vector)
-    geo2 = calculate_location_geopy(lat, lon)
-    return_dict_math =  {'latitude': lat2,'longitude': lon2, 'altitude': alt2, 'geoposition': geo2}
-
-    return {"astropy calcs": return_dict_astropy, "slack math calcs": return_dict_math}
+    return_dict = {'latitude': lat,'longitude': lon, 'altitude': alt, 'geoposition': geo}
+    return return_dict
 
 @app.route('/now', methods=['GET'])
 def find_now():
