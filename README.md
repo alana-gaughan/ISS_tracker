@@ -2,15 +2,17 @@
 
 ## Description
 
-This project is a web application that uses NASA's predicated ISS trajectory data to track the speed and location of the ISS, and can also print other interesting details about the data. 
+This project is a web application that uses NASA's predicated ISS trajectory data to track the speed and location of the ISS. It can also print various facts about the predicted speed and location
+
+## Project Diagram
 
 ## Project Files
 
 This project contains 2 scripts, a dockerfile, a "requirements.txt" file, a docker-compose file, as well as a helpful diagram.
-1. iss_tracker.py: contains 10 functions that are used in the web application
-2. test_iss_tracker.py: contains 1-3 unit tests for each function in iss_tracker.py
+1. iss_tracker.py: contains functions that are used in the web application
+2. test_iss_tracker.py: contains unit tests for each function in iss_tracker.py
 3. Dockerfile: used to build docker images to your dockerhub account. Eventually these images can be used to create a container to run the code
-4. docker-compose.yml: used to run our multi-container code
+4. docker-compose.yml: used to run our containers
 5. requirements.txt: contains all required libraries and packages needed to run the project
 
 Below is a diagram that illustrates project contents.
@@ -26,7 +28,6 @@ ISS_Tracker/
 └── test
     └── test_iss_tracker.py
 '''
-
 
 ## The Data
 
@@ -56,45 +57,208 @@ When you want to stop your container and remove it, use the commands:
 docker stop <container_ID>
 docker rm <container_ID>
 ```
+Alternatively, this project contains a docker-compose.yml file which will automatically build the image and run the containers on port 5000 with a few simple commands. Before you use the docker-compose, change the dockerhub username to your own, and the port to whatever you want. Then, to run the container in the background, use the following command:
+```
+docker-compose up -d
+```
+To close the container when you are done, use the command:
+```
+docker-compose down
+```
 
 ### Curl Commands
 
 The user will use "curl" commands to interact with the app. The curl commands look like:
 ```
-curl localhost:<port_number>/<url_parameters>
+curl localhost:5000/<url_parameters>
 ```
 The following url parameters are accepted: 
-1) /epochs?limit=int&offset=int
-2) /epochs/<epoch>
-3) /epochs/<epoch>/speed
-4) /now
+1) /comment
+2) /header
+3) /metadata
+4) /epochs
+5) /epochs?limit=int&offset=int
+6) /epochs/<epoch>
+7) /epochs/<epoch>/speed
+8) /epochs/<epoch>/location
+9) /now
 
-## Output
-
-Using the route "/epochs?limit=int&offset=int", the user can recieve a list of epochs of length "limit" that starts at the "offset". The default for offset is 0 and the default for limit is the lenth of the dataset, so when this command is run without query parameters, it will return the entire dataset in the form of a list of epochs. Here is an example of the expected output for limit = 2, and offset = 10.
+### Outputs & Interpretations
+The route "/comment" returns the list of comments that are provided by NASA. There may be various types of facts in this section including when the ISS will be launching, when it will be docking, ... Here is an example output:
+```
+curl localhost:5000/comment
+```
+```
+[]
+```
+The route "/header" returns the header of the data file which includes the date the data was created and the author of the data. Here is an example output:
+```
+curl localhost:5000/header
+```
+```
+{}
+```
+The route "/metadata" returns a dictionary containing information about the data itself, like the name of the object being tracked, the reference frame, the time zone reference frame, as well as the start and stop times of the data. Here is an example output:
+```
+curl localhost:5000/metadata
+```
+```
+{}
+```
+Using the route "/epochs?limit=int&offset=int", the user can recieve a list of epochs of length "limit" that starts at the "offset". The default for offset is 0 and the default for limit is the lenth of the dataset, so when this command is run without query parameters, it will return the entire dataset in the form of a list of epochs. Here is an example of the expected output for limit = 2, and offset = 1.
 
 ```
-curl localhost:5000/epochs?limit=2&offset=10
+curl localhost:5000/epochs?limit=2&offset=1
 ```
 ```
-abcdefghijklmnopqrstuv
+[
+  {
+    "EPOCH": "2024-075T12:04:00.000Z",
+    "X": {
+      "#text": "-4893.8238680509903",
+      "@units": "km"
+    },
+    "X_DOT": {
+      "#text": "-1.19130674008412",
+      "@units": "km/s"
+    },
+    "Y": {
+      "#text": "-1233.18749043554",
+      "@units": "km"
+    },
+    "Y_DOT": {
+      "#text": "-6.8853449488571803",
+      "@units": "km/s"
+    },
+    "Z": {
+      "#text": "4549.8950247933299",
+      "@units": "km"
+    },
+    "Z_DOT": {
+      "#text": "-3.1367876699428199",
+      "@units": "km/s"
+    }
+  },
+  {
+    "EPOCH": "2024-075T12:08:00.000Z",
+    "X": {
+      "#text": "-4998.5872791117999",
+      "@units": "km"
+    },
+    "X_DOT": {
+      "#text": "0.32368228959634998",
+      "@units": "km/s"
+    },
+    "Y": {
+      "#text": "-2820.8454591355598",
+      "@units": "km"
+    },
+    "Y_DOT": {
+      "#text": "-6.2644494579024697",
+      "@units": "km/s"
+    },
+    "Z": {
+      "#text": "3640.56209437198",
+      "@units": "km"
+    },
+    "Z_DOT": {
+      "#text": "-4.3947349595401803",
+      "@units": "km/s"
+    }
+  }
+]
 ```
 
-The route "/epochs/<epoch>" will return the state vectors for a specific epoch. The epochs are dictionaries that look like:
+The route "/epochs/<epoch>" will return the state vectors for a specific epoch. The epoch must be in the following format:
+```
+<year>-<day out of 365>T<hour>:<min>:<second>.<milliseconds>Z
+```
+Not every timestamp is available to be used as an epoch, it must be one that is already in the data. For example, if you wanted to find data for March 16th, 2024 at 12:08 a.m., you would use the following command:
+```
+curl localhost:5000/epochs/2024-075T12:08:00.000Z
+```
 ```
 {
-"EPOCH" : "<timestamp>", 
-"X" : {"@units" : "km", "#text": "<x_coordinates>"},
-"Y" : {"@units" : "km", "#text": "<y_coordinates>"},
-"Z" : {"@units" : "km", "#text": "<z_coordinates>"},
-"X_DOT" : {"@units" : "km/s", "#text": "<x_velocity>"},
-"Y_DOT" : {"@units" : "km/s", "#text": "<y_velocity>"},
-"Z_DOT" : {"@units" : "km/s", "#text": "<z_velocity>"},
+  "EPOCH": "2024-075T12:08:00.000Z",
+  "X": {
+    "#text": "-4998.5872791117999",
+    "@units": "km"
+  },
+  "X_DOT": {
+    "#text": "0.32368228959634998",
+    "@units": "km/s"
+  },
+  "Y": {
+    "#text": "-2820.8454591355598",
+    "@units": "km"
+  },
+  "Y_DOT": {
+    "#text": "-6.2644494579024697",
+    "@units": "km/s"
+  },
+  "Z": {
+    "#text": "3640.56209437198",
+    "@units": "km"
+  },
+  "Z_DOT": {
+    "#text": "-4.3947349595401803",
+    "@units": "km/s"
+  }
 }
 ```
-The coordinates are in the J2000 reference frame.
-The route "/epochs/<epoch>/speed" will return the speed for the given epoch in km/s.
-Finally, the route "/now" will return the state vectors and the instantaneous speed for the epoch that is nearest to the time when the function is run.
+The coordinates "X", "Y", and "Z" are in the J2000 reference frame, and the timestamp is in UTC time. "X_DOT", "Y_DOT", and "Z_DOT" represent the instantaneous velocity in each direction at that time.
+
+The route "/epochs/<epoch>/speed" will return the speed for the given epoch in km/s. For example:
+```
+curl localhost:5000/epochs/2024-075T12:08:00.000Z/speed
+```
+```
+{
+  "epoch": "2024-075T12:08:00.000Z",
+  "speed": 7.659098680642358
+}
+```
+
+The route "/epochs/<epoch>/location" will return the location for the given epoch in the form of latitude, longitude, altitude, and geoposition. The latitude and longitude is written in decimal degrees, and the geoposition will tell you the nearest suburb or village it is above. For example:
+```
+curl localhost:5000/epochs/2024-077T21:44:00.000Z
+```
+```
+{
+  "altitude": 427.7898508843109,
+  "geoposition": "Nanutarra, Shire Of Ashburton, Western Australia, Australia",
+  "latitude": -22.789323399773004,
+  "longitude": 115.47786117809547
+}
+```
+If the ISS is over the ocean, the geoposition will say "No data, perhaps over an ocean". For example:
+```
+{
+  "altitude": 424.79661884721963,
+  "geoposition": "No data, perhaps over an ocean",
+  "latitude": 32.43149854748942,
+  "longitude": -144.62845332002348
+}
+```
+
+Finally, the route "/now" will return the location dictionary and the instantaneous speed for the epoch that is nearest to the time when the function is run. For example, if I run this code on March 18th at 4:43 pm CT:
+```
+curl localhost:5000/now
+```
+```
+{
+  "epoch": "2024-077T21:44:00.000Z",
+  "location": {
+    "altitude": 427.7898508843109,
+    "geoposition": "Nanutarra, Shire Of Ashburton, Western Australia, Australia",
+    "latitude": -22.789323399773004,
+    "longitude": 115.47786117809547
+  },
+  "speed": 7.653789715924686
+}
+```
+
+## Running Containerized Unit Tests
 
 ## Citations
 
