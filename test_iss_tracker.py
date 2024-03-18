@@ -37,7 +37,7 @@ def test_epoch_to_list():
     assert epoch_to_list('2024-047T23:59:00.000Z') == [2024, 47, 23, 59]
     assert epoch_to_list('2024-002T01:01:00.000Z') == [2025, 2, 1, 1]
 
- def test_find_closest_epoch():
+def test_find_closest_epoch():
      test_epoch_list = [{'EPOCH': '2024-048T00:07:00.000Z'}, {'EPOCH': '2024-048T00:11:00.000Z'}, {'EPOCH':'2024-048T00:15:00.000Z'}]
      assert find_closest_epoch(test_epoch_list, [2024, 2, 17, 0, 9, 0]) == {'EPOCH': '2024-048T00:07:00.000Z'}
 
@@ -73,7 +73,8 @@ def test_calculate_location_astropy():
     alt = math.sqrt(x**2 + y**2 + z**2) - MEAN_EARTH_RADIUS
     lon = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
     if lon > 180:
-        lon = -180 + (lon - 180)                                                                if lon < -180:
+        lon = -180 + (lon - 180)
+    if lon < -180:
         lon = 180 + (lon + 180)
     assert calculate_location_astropy(sv_17) == (pytest.approx(lat, 20), pytest.approx(lon, 20), pytest.approx(alt, 20))
 
@@ -84,5 +85,5 @@ def test_find_location():
 
 response9 = requests.get('http://127.0.0.1:5000/now')
 def test_find_now():
-    asser response9.status_code == 200
+    assert response9.status_code == 200
     assert isinstance(response9.json(), dict) == True

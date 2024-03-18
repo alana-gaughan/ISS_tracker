@@ -249,8 +249,7 @@ def calculate_location_math(state_vector):
     epoch_time = epoch.split("T")[1].split(":")
     hrs = int(epoch_time[0])
     mins = int(epoch_time[1])
-    print(f"hrs = {hrs}, mins = {mins}")
-    
+        
     lat = math.degrees(math.atan2(z, math.sqrt(x**2 + y**2)))
     alt = math.sqrt(x**2 + y**2 + z**2) - MEAN_EARTH_RADIUS
     lon = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
@@ -274,7 +273,7 @@ def calculate_location_geopy(lat, lon):
     geocoder = Nominatim(user_agent='iss_tracker')
     geo = geocoder.reverse((lat, lon), zoom=15, language="en")
     if geo:
-        return geo
+        return str(geo)
     else:
         return "No data, perhaps over an ocean"
 
