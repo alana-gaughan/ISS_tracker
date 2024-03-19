@@ -2,7 +2,7 @@
 
 ## Description
 
-This project is a web application that uses NASA's predicated ISS trajectory data to track the speed and location of the ISS. It can also print various facts about the predicted speed and location
+This project is a web application that uses NASA's predicated ISS trajectory data to track the speed and location of the ISS.
 
 ## Project Diagram
 ![Screenshot (470)](https://github.com/alana-gaughan/ISS_tracker/assets/142938455/6df0ff7a-2d20-4461-bf46-74bf8eebad90)
@@ -32,11 +32,7 @@ ISS_Tracker/
 
 ## The Data
 
-The data is called ISS trajectory Data and can be found on Nasa's Spot the Station (1). This data contains:
-1. A header which describes ...
-2. A metadata section which ...
-3. A comment section for useful information about launches of the ISS or anything else
-4. A list of about 6000 state vectors. These contain the predicted time, position, and speed of the ISS over a time span of about 15 days. It is updated approximately 3 times per week so that it stays accurate.
+The data is called ISS trajectory Data and can be found on Nasa's Spot the Station (1). This data contains list of about 6000 state vectors that can help track the international space station's location and speed. The state vectors contain the predicted time, position, and speed of the ISS over a time span of about 15 days. It is updated approximately 3 times per week so that it stays accurate.
 It can be accessed at this url [https://spotthestation.nasa.gov/trajectory_data.cfm](https://spotthestation.nasa.gov/trajectory_data.cfm). It can be exported as a xml or a txt.
 
 ## How to Run
@@ -79,7 +75,7 @@ The following url parameters are accepted:
 3) /metadata
 4) /epochs
 5) /epochs?limit=int&offset=int
-6) /epochs/<epoch>
+6) /epochs/<<epoch></epoch>
 7) /epochs/<epoch>/speed
 8) /epochs/<epoch>/location
 9) /now
