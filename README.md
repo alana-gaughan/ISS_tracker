@@ -81,26 +81,68 @@ The following url parameters are accepted:
 9) /now
 
 ### Outputs & Interpretations
-The route "/comment" returns the list of comments that are provided by NASA. There may be various types of facts in this section including when the ISS will be launching, when it will be docking, ... Here is an example output:
+The route "/comment" returns the list of comments that are provided by NASA. There may be various physical properties of the ISS in the comment list such as the drag coefficient, the mass, the solar radiation coefficient, etc. The comments will also include upcoming launching and docking dates among other things. Here is an example output:
 ```
 curl localhost:5000/comment
 ```
 ```
-[]
+[
+  "Units are in kg and m^2",
+  "MASS=459154.20",
+  "DRAG_AREA=1487.80",
+  "DRAG_COEFF=2.00",
+  "SOLAR_RAD_AREA=0.00",
+  "SOLAR_RAD_COEFF=0.00",
+  "Orbits start at the ascending node epoch",
+  "ISS first asc. node: EPOCH = 2024-03-15T13:05:34.170 $ ORBIT = 402 $ LAN(DEG) = 49.49781",
+  "ISS last asc. node : EPOCH = 2024-03-30T10:42:10.141 $ ORBIT = 633 $ LAN(DEG) = -3.07552",
+  "Begin sequence of events",
+  "TRAJECTORY EVENT SUMMARY:",
+  null,
+  "|       EVENT        |       TIG        | ORB |   DV    |   HA    |   HP    |",
+  "|                    |       GMT        |     |   M/S   |   KM    |   KM    |",
+  "|                    |                  |     |  (F/S)  |  (NM)   |  (NM)   |",
+  "=============================================================================",
+  "71S Launch            081:13:21:19.000             0.0     425.0     412.5",
+  "(0.0)   (229.5)   (222.8)",
+  null,
+  "71S Docking           081:16:39:42.000             0.0     425.0     412.5",
+  "(0.0)   (229.5)   (222.7)",
+  null,
+  "SpX-30 Launch         081:20:55:09.000             0.0     425.0     412.6",
+  "(0.0)   (229.5)   (222.8)",
+  null,
+  "SpX-30 Docking        083:11:30:00.000             0.0     425.3     412.0",
+  "(0.0)   (229.6)   (222.4)",
+  null,
+  "=============================================================================",
+  "End sequence of events"
+]
 ```
 The route "/header" returns the header of the data file which includes the date the data was created and the author of the data. Here is an example output:
 ```
 curl localhost:5000/header
 ```
 ```
-{}
+{
+  "CREATION_DATE": "2024-075T20:59:30.931Z",
+  "ORIGINATOR": "JSC"
+}
 ```
 The route "/metadata" returns a dictionary containing information about the data itself, like the name of the object being tracked, the reference frame, the time zone reference frame, as well as the start and stop times of the data. Here is an example output:
 ```
 curl localhost:5000/metadata
 ```
 ```
-{}
+{
+  "CENTER_NAME": "EARTH",
+  "OBJECT_ID": "1998-067-A",
+  "OBJECT_NAME": "ISS",
+  "REF_FRAME": "EME2000",
+  "START_TIME": "2024-075T12:00:00.000Z",
+  "STOP_TIME": "2024-090T12:00:00.000Z",
+  "TIME_SYSTEM": "UTC"
+}
 ```
 Using the route "/epochs?limit=int&offset=int", the user can recieve a list of epochs of length "limit" that starts at the "offset". The default for offset is 0 and the default for limit is the lenth of the dataset, so when this command is run without query parameters, it will return the entire dataset in the form of a list of epochs. Here is an example of the expected output for limit = 2, and offset = 1.
 
