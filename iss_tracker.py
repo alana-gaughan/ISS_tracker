@@ -227,7 +227,7 @@ def calculate_location_astropy(state_vector):
     loc.lon.value (float): the longitude of the ISS
     loc.height.vale (float): the altitude of the ISS
     '''
-    # This code is from COE332 slack written by Professor Allen
+    # This code is adapted from COE332 slack written by Professor Allen
     x = float(state_vector['X']['#text'])
     y = float(state_vector['Y']['#text'])
     z = float(state_vector['Z']['#text'])
@@ -248,7 +248,7 @@ def calculate_location_geopy(lat, lon):
     Outputs:
     geo (str): The geopositon of the ISS with given latitude and longitude 
     '''
-    # This code is from the Prof as well
+    # This code is adapted from the COE332 slack from Professor Allen as well
     geocoder = Nominatim(user_agent='iss_tracker')
     geo = geocoder.reverse((lat, lon), zoom=13, language="en")
     if geo:
