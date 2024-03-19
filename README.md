@@ -299,6 +299,12 @@ curl localhost:5000/now
 
 ## Running Containerized Unit Tests
 
+Unit tests are used to check if the functions work properly. They are used for debugging, not for the actual program. In order to run unit tests, the container must be running in the background still. Then you can use the following command to run the tests:
+
+```
+python3 test/test_iss_tracker.py
+```
+
 ## Citations
 
 (1) NASA (2024) ISS Trajectory Data. Nasa's Spot the Station. [https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml](https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml)
