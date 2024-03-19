@@ -5,6 +5,7 @@
 This project is a web application that uses NASA's predicated ISS trajectory data to track the speed and location of the ISS. It can also print various facts about the predicted speed and location
 
 ## Project Diagram
+![Screenshot (470)](https://github.com/alana-gaughan/ISS_tracker/assets/142938455/6df0ff7a-2d20-4461-bf46-74bf8eebad90)
 
 ## Project Files
 
