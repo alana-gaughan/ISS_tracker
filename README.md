@@ -301,4 +301,4 @@ curl localhost:5000/now
 
 ## Citations
 
-(1) NASA (2024) ISS Trajectory Data. Nasa's Spot the Station. [https://spotthestation.nasa.gov/trajectory_data.cfm](https://spotthestation.nasa.gov/trajectory_data.cfm)https://spotthestation.nasa.gov/trajectory_data.cfm
+(1) NASA (2024) ISS Trajectory Data. Nasa's Spot the Station. [https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml](https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml)
