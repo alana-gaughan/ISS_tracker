@@ -1,4 +1,4 @@
-# ISS_tracker
+# ISS Tracker
 
 ## Description
 
