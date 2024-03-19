@@ -75,9 +75,9 @@ The following url parameters are accepted:
 3) /metadata
 4) /epochs
 5) /epochs?limit=int&offset=int
-6) /epochs/<<epoch></epoch>
-7) /epochs/<epoch>/speed
-8) /epochs/<epoch>/location
+6) /epochs/(epoch)
+7) /epochs/(epoch)/speed
+8) /epochs/(epoch)/location
 9) /now
 
 ### Outputs & Interpretations
@@ -105,7 +105,7 @@ curl localhost:5000/metadata
 Using the route "/epochs?limit=int&offset=int", the user can recieve a list of epochs of length "limit" that starts at the "offset". The default for offset is 0 and the default for limit is the lenth of the dataset, so when this command is run without query parameters, it will return the entire dataset in the form of a list of epochs. Here is an example of the expected output for limit = 2, and offset = 1.
 
 ```
-curl localhost:5000/epochs?limit=2&offset=1
+curl "localhost:5000/epochs?limit=2&offset=1"
 ```
 ```
 [
@@ -166,7 +166,7 @@ curl localhost:5000/epochs?limit=2&offset=1
 ]
 ```
 
-The route "/epochs/<epoch>" will return the state vectors for a specific epoch. The epoch must be in the following format:
+The route "/epochs/(epoch)" will return the state vectors for a specific epoch. The epoch must be in the following format:
 ```
 <year>-<day out of 365>T<hour>:<min>:<second>.<milliseconds>Z
 ```
@@ -205,7 +205,7 @@ curl localhost:5000/epochs/2024-075T12:08:00.000Z
 ```
 The coordinates "X", "Y", and "Z" are in the J2000 reference frame, and the timestamp is in UTC time. "X_DOT", "Y_DOT", and "Z_DOT" represent the instantaneous velocity in each direction at that time.
 
-The route "/epochs/<epoch>/speed" will return the speed for the given epoch in km/s. For example:
+The route "/epochs/(epoch)/speed" will return the speed for the given epoch in km/s. For example:
 ```
 curl localhost:5000/epochs/2024-075T12:08:00.000Z/speed
 ```
@@ -216,7 +216,7 @@ curl localhost:5000/epochs/2024-075T12:08:00.000Z/speed
 }
 ```
 
-The route "/epochs/<epoch>/location" will return the location for the given epoch in the form of latitude, longitude, altitude, and geoposition. The latitude and longitude is written in decimal degrees, and the geoposition will tell you the nearest suburb or village it is above. For example:
+The route "/epochs/(epoch)/location" will return the location for the given epoch in the form of latitude, longitude, altitude, and geoposition. The latitude and longitude is written in decimal degrees, and the geoposition will tell you the nearest suburb or village it is above. For example:
 ```
 curl localhost:5000/epochs/2024-077T21:44:00.000Z
 ```
