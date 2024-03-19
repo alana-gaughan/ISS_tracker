@@ -18,7 +18,7 @@ This project contains 2 scripts, a dockerfile, a "requirements.txt" file, a dock
 
 Below is a diagram that illustrates project contents.
 
-'''
+```
 ISS_Tracker/
 ├── Dockerfile
 ├── README.md
@@ -28,7 +28,7 @@ ISS_Tracker/
 ├── requirements.txt
 └── test
     └── test_iss_tracker.py
-'''
+```
 
 ## The Data
 
